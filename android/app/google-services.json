@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "73275892816",
+    "project_id": "defensesuit",
+    "storage_bucket": "defensesuit.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:73275892816:android:3b9ad5b23858853d151d55",
+        "android_client_info": {
+          "package_name": "com.example.wx3_interface"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCa3d0tsP34PRW2EHBm0iGFHjOFPOL2ZeA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
