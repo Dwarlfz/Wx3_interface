@@ -4,14 +4,20 @@
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION"/>
     <uses-permission android:name="android.permission.BLUETOOTH_CONNECT"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
+    <uses-permission android:name="android.permission.INTERNET"/>
 
     <application
         android:label="wx3_interface"
-        android:icon="@mipmap/ic_launcher">
+        android:icon="@mipmap/ic_launcher"
+        >
+        <uses-library
+            android:name="org.apache.http.legacy"
+            android:required="false"/>
 
         <meta-data
             android:name="com.google.android.geo.API_KEY"
-            android:value="AIzaSyCa3d0tsP34PRW2EHBm0iGFHjOFPOL2ZeA"/>
+            android:value="AIzaSyCO8xKAQaBmBpTSwGR2ZdZ6ljI5dhhGY6M"/>
 
         <activity
             android:name=".MainActivity"

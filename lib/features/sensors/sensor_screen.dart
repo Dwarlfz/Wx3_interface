@@ -1,3 +1,5 @@
+// sensor_screen.dart
+
 import 'package:flutter/material.dart';
 import 'package:wx3_interface/widgets/custom_app_bar.dart';
 import 'package:wx3_interface/widgets/bottom_nav_bar.dart';
@@ -77,7 +79,7 @@ class _SensorScreenState extends State<SensorScreen> {
                     ),
                   );
                 },
-                alertMessages: const [], // No duplication
+                alertMessages: alertMessages,
               ),
               NotificationBanner(alertMessages: alertMessages),
               Expanded(

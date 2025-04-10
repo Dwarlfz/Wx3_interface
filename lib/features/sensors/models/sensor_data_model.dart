@@ -21,6 +21,19 @@ class SensorData {
     required this.timestamp,
   });
 
+  factory SensorData.fromMap(Map<String, dynamic> map) {
+    return SensorData(
+      userId: map['userId'] ?? '',
+      heartRate: map['heartRate'] ?? 0,
+      respirationRate: map['respirationRate'] ?? 0,
+      bodyTemperature: (map['bodyTemperature'] ?? 0).toDouble(),
+      environmentTemperature: (map['environmentTemperature'] ?? 0).toDouble(),
+      humidity: (map['humidity'] ?? 0).toDouble(),
+      toxicGasDetected: map['toxicGasDetected'] ?? false,
+      timestamp: map['timestamp'] ?? Timestamp.now(),
+    );
+  }
+
   Map<String, dynamic> toMap() {
     return {
       'userId': userId,
@@ -32,18 +45,5 @@ class SensorData {
       'toxicGasDetected': toxicGasDetected,
       'timestamp': timestamp,
     };
-  }
-
-  factory SensorData.fromMap(Map<String, dynamic> map) {
-    return SensorData(
-      userId: map['userId'] ?? '',
-      heartRate: map['heartRate'] ?? 0,
-      respirationRate: map['respirationRate'] ?? 0,
-      bodyTemperature: (map['bodyTemperature'] as num?)?.toDouble() ?? 0.0,
-      environmentTemperature: (map['environmentTemperature'] as num?)?.toDouble() ?? 0.0,
-      humidity: (map['humidity'] as num?)?.toDouble() ?? 0.0,
-      toxicGasDetected: map['toxicGasDetected'] ?? false,
-      timestamp: map['timestamp'] ?? Timestamp.now(),
-    );
   }
 }

@@ -7,9 +7,11 @@ import 'package:wx3_interface/features/compass/widgets/compass_display.dart';
 import 'package:wx3_interface/core/services/gps_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:google_maps_flutter/google_maps_flutter.dart';
+import 'package:flutter_compass/flutter_compass.dart';
 import 'dart:async';
 import 'dart:io';
 import 'package:path_provider/path_provider.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_database/firebase_database.dart';
 
 class CompassScreen extends StatefulWidget {
@@ -20,9 +22,13 @@ class CompassScreen extends StatefulWidget {
 }
 
 class _CompassScreenState extends State<CompassScreen> {
-  int selectedIndex = 1; // Compass tab selected
+  int selectedIndex = 1;
   final GpsService gpsService = GpsService();
-  final databaseRef = FirebaseDatabase.instance.ref("route_history");
+  DatabaseReference? get databaseRef {
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return null;
+    return FirebaseDatabase.instance.ref("route_history/${user.uid}");
+  }
 
   Position? currentPosition;
   Position? lastPosition;
@@ -34,11 +40,49 @@ class _CompassScreenState extends State<CompassScreen> {
   final List<LatLng> _routeHistory = [];
   StreamSubscription<Position>? positionStream;
   double totalDistance = 0.0;
+  double? _heading;
 
   @override
   void initState() {
     super.initState();
+    _requestLocationPermission();
     _startTracking();
+    _listenToFirebaseRouteHistory();
+    FlutterCompass.events?.listen((event) {
+      setState(() {
+        _heading = event.heading;
+      });
+    });
+  }
+
+  void _requestLocationPermission() async {
+    final status = await Geolocator.requestPermission();
+    if (status == LocationPermission.denied ||
+        status == LocationPermission.deniedForever) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Location permission is required.')),
+      );
+    }
+  }
+
+  void _listenToFirebaseRouteHistory() {
+    final ref = databaseRef;
+    if (ref == null) return;
+
+    ref.onValue.listen((event) {
+      final data = event.snapshot.value as Map<dynamic, dynamic>?;
+      if (data != null) {
+        final updatedRoute = data.values.map((entry) {
+          final map = Map<String, dynamic>.from(entry);
+          return LatLng(map['latitude'], map['longitude']);
+        }).toList();
+
+        setState(() {
+          _routeHistory.clear();
+          _routeHistory.addAll(updatedRoute);
+        });
+      }
+    });
   }
 
   void _startTracking() async {
@@ -57,6 +101,8 @@ class _CompassScreenState extends State<CompassScreen> {
 
     const locationSettings = LocationSettings(accuracy: LocationAccuracy.high, distanceFilter: 5);
     positionStream = Geolocator.getPositionStream(locationSettings: locationSettings).listen((Position newPosition) {
+      if (!mounted) return;
+
       setState(() {
         lastPosition = currentPosition;
         currentPosition = newPosition;
@@ -80,8 +126,7 @@ class _CompassScreenState extends State<CompassScreen> {
           ),
         );
 
-        // Store to Firebase
-        databaseRef.push().set({
+        databaseRef?.push().set({
           'latitude': newPosition.latitude,
           'longitude': newPosition.longitude,
           'timestamp': newPosition.timestamp?.toIso8601String() ?? DateTime.now().toIso8601String()
@@ -97,17 +142,29 @@ class _CompassScreenState extends State<CompassScreen> {
   }
 
   Future<void> _exportRouteAsGpx() async {
-    final directory = await getApplicationDocumentsDirectory();
-    final path = '${directory.path}/route.gpx';
-    final gpxData = '''<?xml version="1.0" encoding="UTF-8"?>
+    try {
+      final directory = await getExternalStorageDirectory();
+      final downloadsDir = Directory("/storage/emulated/0/Download");
+      final file = File('${downloadsDir.path}/route.gpx');
+
+      final gpxData = '''<?xml version="1.0" encoding="UTF-8"?>
 <gpx version="1.1" creator="WX3">
 <trk><name>Route</name><trkseg>
 ${_routeHistory.map((point) => '<trkpt lat="${point.latitude}" lon="${point.longitude}" />').join('\n')}
 </trkseg></trk>
 </gpx>''';
-    final file = File(path);
-    await file.writeAsString(gpxData);
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Route exported to $path')));
+
+      await file.writeAsString(gpxData);
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Route exported to ${file.path}')),
+      );
+    } catch (e) {
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text('Failed to export: $e')),
+      );
+    }
   }
 
   void _clearHistory() {
@@ -126,7 +183,7 @@ ${_routeHistory.map((point) => '<trkpt lat="${point.latitude}" lon="${point.long
 
   void onItemTapped(int index) {
     if (index == 0) {
-      Navigator.pushNamed(context, '/');
+      Navigator.pushNamed(context, '/sensors');
     }
   }
 
@@ -150,6 +207,7 @@ ${_routeHistory.map((point) => '<trkpt lat="${point.latitude}" lon="${point.long
                   latitude: currentPosition!.latitude,
                   longitude: currentPosition!.longitude,
                   speed: speed,
+                  compassHeading: _heading,
                 ),
                 Text('Distance: ${totalDistance.toStringAsFixed(2)} meters'),
                 Expanded(
