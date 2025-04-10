@@ -1,5 +1,3 @@
-// profile_screen.dart
-
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -9,6 +7,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:csv/csv.dart';
 import 'package:pdf/widgets.dart' as pw;
+import 'package:share_plus/share_plus.dart';
 
 import 'package:wx3_interface/core/models/user_model.dart';
 import 'package:wx3_interface/core/models/sensor_data_model.dart';
@@ -17,9 +16,24 @@ import 'package:wx3_interface/features/sensors/screens/upload_manual_screen.dart
 
 class ProfileScreen extends StatelessWidget {
   final UserModel user;
+
   const ProfileScreen({super.key, required this.user});
 
+  Future<void> _checkAndRequestStoragePermission() async {
+    if (Platform.isAndroid) {
+      var status = await Permission.storage.status;
+      if (!status.isGranted) {
+        await Permission.storage.request();
+      }
+    }
+  }
+
+  Future<Directory?> _getDownloadDir() async {
+    return await getDownloadsDirectory();
+  }
+
   Future<void> _exportAsCSV(BuildContext context) async {
+    await _checkAndRequestStoragePermission();
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
@@ -47,16 +61,19 @@ class ProfileScreen extends StatelessWidget {
     }
 
     final csvString = const ListToCsvConverter().convert(csvData);
-    final directory = await getDownloadsDirectory();
+    final directory = await _getDownloadDir();
     final file = File('${directory!.path}/sensor_records.csv');
     await file.writeAsString(csvString);
 
+    Share.shareXFiles([XFile(file.path)], text: 'Sensor Data CSV Export');
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("CSV exported successfully.")),
+      const SnackBar(content: Text("CSV exported and ready to share.")),
     );
   }
 
   Future<void> _exportAsPDF(BuildContext context) async {
+    await _checkAndRequestStoragePermission();
     final currentUser = FirebaseAuth.instance.currentUser;
     if (currentUser == null) return;
 
@@ -80,7 +97,7 @@ class ProfileScreen extends StatelessWidget {
               pw.Text("Body Temp: ${data.bodyTemperature} °C"),
               pw.Text("Env Temp: ${data.environmentTemperature} °C"),
               pw.Text("Humidity: ${data.humidity} %"),
-              pw.Text("Toxic Gas Detected: ${data.toxicGasDetected ? "Yes" : "No"}"),
+              pw.Text("Toxic Gas: ${data.toxicGasDetected ? "Yes" : "No"}"),
               pw.Text("Timestamp: ${DateFormat('yyyy-MM-dd HH:mm:ss').format(data.timestamp.toDate())}"),
               pw.SizedBox(height: 10),
             ],
@@ -89,12 +106,14 @@ class ProfileScreen extends StatelessWidget {
       );
     }
 
-    final directory = await getDownloadsDirectory();
+    final directory = await _getDownloadDir();
     final file = File('${directory!.path}/sensor_records.pdf');
     await file.writeAsBytes(await pdf.save());
 
+    Share.shareXFiles([XFile(file.path)], text: 'Sensor Data PDF Export');
+
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(content: Text("PDF exported successfully.")),
+      const SnackBar(content: Text("PDF exported and ready to share.")),
     );
   }
 
@@ -105,32 +124,30 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  // Future<void> _viewMostRecentRecord() async {
+  //   final userId = user.id; // this will work only inside State class
+  //
+  //   try {
+  //     final snapshot = await FirebaseFirestore.instance
+  //         .collection('sensorData')
+  //         .where('userId', isEqualTo: userId)
+  //         .orderBy('timestamp', descending: true)
+  //         .orderBy(FieldPath.documentId, descending: true)
+  //         .limit(1)
+  //         .get();
+  //
+  //     if (snapshot.docs.isNotEmpty) {
+  //       final data = snapshot.docs.first.data();
+  //       print("Most recent record: $data");
+  //     } else {
+  //       print("No records found for user.");
+  //     }
+  //   } catch (e) {
+  //     print("Error fetching recent record: $e");
+  //   }
+  // }
 
-  void _viewMostRecentRecord(BuildContext context) async {
-    final currentUser = FirebaseAuth.instance.currentUser;
-    if (currentUser == null) return;
 
-    final snapshot = await FirebaseFirestore.instance
-        .collection('sensorData')
-        .where('userId', isEqualTo: currentUser.uid)
-        .orderBy('timestamp', descending: true)
-        .limit(1)
-        .get();
-
-    if (snapshot.docs.isNotEmpty) {
-      final latestData = SensorData.fromMap(snapshot.docs.first.data());
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (_) => RecentRecordScreen(data: latestData),
-        ),
-      );
-    } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('No records found.')),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -146,17 +163,42 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 4),
             Text('Department: ${user.squad}', style: const TextStyle(fontSize: 16)),
             const SizedBox(height: 20),
-            ElevatedButton(
-              onPressed: () => _viewMostRecentRecord(context),
-              child: const Text('View Most Recent Record'),
-            ),
+            // ElevatedButton(
+            //   onPressed: () async {
+            //     final snapshot = await FirebaseFirestore.instance
+            //         .collection('sensorData')
+            //         .where('userId', isEqualTo: user.id)
+            //         .orderBy('timestamp', descending: true)
+            //         .limit(5)
+            //         .get();
+            //
+            //     if (snapshot.docs.isNotEmpty) {
+            //       final recentRecords = snapshot.docs.map((doc) {
+            //         final data = doc.data();
+            //         return SensorData.fromMap(data); // no need for docId here
+            //       }).toList();
+            //
+            //       Navigator.push(
+            //         context,
+            //         MaterialPageRoute(
+            //           builder: (_) => RecentRecordScreen(records: recentRecords),
+            //         ),
+            //       );
+            //     } else {
+            //       ScaffoldMessenger.of(context).showSnackBar(
+            //         const SnackBar(content: Text("No recent records found.")),
+            //       );
+            //     }
+            //   },
+            //   child: const Text('View Past Records'),
+            // ),
             ElevatedButton(
               onPressed: () {
                 showDialog(
                   context: context,
                   builder: (ctx) => AlertDialog(
                     title: const Text("Export Format"),
-                    content: const Text("Choose the file format to export:"),
+                    content: const Text("Choose the file format to export and share:"),
                     actions: [
                       TextButton(
                         onPressed: () {
@@ -176,7 +218,7 @@ class ProfileScreen extends StatelessWidget {
                   ),
                 );
               },
-              child: const Text("Export Past Record"),
+              child: const Text("Export Past Records"),
             ),
             ElevatedButton(
               onPressed: () => _manualUpload(context),

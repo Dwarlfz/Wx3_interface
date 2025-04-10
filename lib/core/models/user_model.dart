@@ -1,3 +1,5 @@
+// lib/core/models/user_model.dart
+
 class UserModel {
   final String id;
   final String name;
@@ -13,6 +15,7 @@ class UserModel {
     required this.rank,
   });
 
+  // Factory constructor to create a UserModel from Firestore map
   factory UserModel.fromMap(Map<String, dynamic> map, String id) {
     return UserModel(
       id: id,
@@ -23,6 +26,7 @@ class UserModel {
     );
   }
 
+  // Convert UserModel to a map for uploading to Firestore
   Map<String, dynamic> toMap() {
     return {
       'name': name,

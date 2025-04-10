@@ -44,19 +44,32 @@ class _SensorScreenState extends State<SensorScreen> {
 
   late final List<String> alertMessages = [
     if (gasLevel > 2.5) 'Toxic gas dangerously high!',
-    if (bodyTemp > 38) 'High body temperature!',
-    if (bodyTemp > 39.5) 'Critical body temperature! Seek help!',
-    if (envTemp > 35) 'High environmental temperature!',
-    if (envTemp < 10) 'External temperature too cold!',
-    if (humidity < 20) 'Air too dry, may cause dehydration.',
-    if (humidity > 80) 'High humidity can cause discomfort.',
-    if (heartRate < 50) 'Heart rate dangerously low!',
-    if (heartRate > 100) 'Heart rate is too high!',
-    if (heartRate > 130) 'Heart rate critical! Seek help!',
-    if (respirationRate < 12) 'Abnormally slow breathing!',
-    if (respirationRate > 20) 'Rapid breathing detected!',
-    if (respirationRate > 30) 'Dangerously high breathing rate!'
+    if (bodyTemp > 39.5)
+      'Critical body temperature! Seek help!'
+    else if (bodyTemp > 38)
+      'High body temperature!',
+    if (envTemp > 35)
+      'High environmental temperature!'
+    else if (envTemp < 10)
+      'External temperature too cold!',
+    if (humidity > 80)
+      'High humidity can cause discomfort.'
+    else if (humidity < 20)
+      'Air too dry, may cause dehydration.',
+    if (heartRate > 130)
+      'Heart rate critical! Seek help!'
+    else if (heartRate > 100)
+      'Heart rate is too high!'
+    else if (heartRate < 50)
+        'Heart rate dangerously low!',
+    if (respirationRate > 30)
+      'Dangerously high breathing rate!'
+    else if (respirationRate > 20)
+      'Rapid breathing detected!'
+    else if (respirationRate < 12)
+        'Abnormally slow breathing!',
   ];
+
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +92,7 @@ class _SensorScreenState extends State<SensorScreen> {
                     ),
                   );
                 },
-                alertMessages: alertMessages,
+                alertMessages: const [],
               ),
               NotificationBanner(alertMessages: alertMessages),
               Expanded(

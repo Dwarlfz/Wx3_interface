@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:wx3_interface/features/sensors/sensor_screen.dart';
 import 'package:wx3_interface/core/models/user_model.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -11,6 +12,7 @@ class LoginScreen extends StatefulWidget {
 }
 
 class _LoginScreenState extends State<LoginScreen> {
+  final TextEditingController nameController = TextEditingController();
   final TextEditingController emailController = TextEditingController();
   final TextEditingController passwordController = TextEditingController();
   final TextEditingController rankController = TextEditingController();
@@ -19,6 +21,7 @@ class _LoginScreenState extends State<LoginScreen> {
   void loginUser() async {
     final email = emailController.text.trim();
     final password = passwordController.text.trim();
+    final name = nameController.text.trim();     // new
     final rank = rankController.text.trim();
     final squad = squadController.text.trim();
 
@@ -30,27 +33,38 @@ class _LoginScreenState extends State<LoginScreen> {
 
       final user = credential.user;
       if (user != null) {
+        // Store user data in Firestore
+        await FirebaseFirestore.instance.collection('users').doc(user.uid).set({
+          'name': name, // make sure you're collecting this in the login screen
+          'email': user.email,
+          'rank': rank,
+          'squad': squad,
+        }, SetOptions(merge: true)); // merge prevents overwriting if exists
+
+        // Then navigate to SensorScreen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
-            builder: (_) => SensorScreen(
-              user: UserModel(
-                id: user.uid,
-                email: user.email ?? '',
-                name: user.displayName ?? 'Default Name',
-                rank: rank,
-                squad: squad,
-              ),
-            ),
+            builder: (_) =>
+                SensorScreen(
+                  user: UserModel(
+                    id: user.uid,
+                    name: name,
+                    email: user.email ?? '',
+                    rank: rank,
+                    squad: squad,
+                  ),
+                ),
           ),
         );
-      }
-    } on FirebaseAuthException catch (e) {
+      }}
+      on FirebaseAuthException catch (e) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text('❌ Login failed: ${e.message}')),
       );
     }
   }
+
 
   @override
   Widget build(BuildContext context) {
@@ -60,6 +74,10 @@ class _LoginScreenState extends State<LoginScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            TextField(
+              controller: nameController,
+              decoration: const InputDecoration(labelText: 'Name'),
+            ),
             TextField(
               controller: emailController,
               decoration: const InputDecoration(labelText: 'Email'),

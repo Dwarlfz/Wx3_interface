@@ -30,7 +30,7 @@ class SensorData {
       environmentTemperature: (map['environmentTemperature'] ?? 0).toDouble(),
       humidity: (map['humidity'] ?? 0).toDouble(),
       toxicGasDetected: map['toxicGasDetected'] ?? false,
-      timestamp: map['timestamp'] ?? Timestamp.now(),
+      timestamp: map['timestamp'],
     );
   }
 
