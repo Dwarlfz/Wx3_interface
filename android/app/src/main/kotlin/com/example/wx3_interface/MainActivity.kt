@@ -1,7 +1,0 @@
-package com.example.wx3_interface
-
-import io.flutter.embedding.android.FlutterActivity
-
-class MainActivity : FlutterActivity(){
-    
-}

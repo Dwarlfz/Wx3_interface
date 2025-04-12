@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="default_web_client_id" translatable="false">73275892816-50cj74l9qcallakfkr7487nj9jegjhdp.apps.googleusercontent.com</string>
+    <string name="gcm_defaultSenderId" translatable="false">73275892816</string>
+    <string name="google_api_key" translatable="false">AIzaSyCa3d0tsP34PRW2EHBm0iGFHjOFPOL2ZeA</string>
+    <string name="google_app_id" translatable="false">1:73275892816:android:c5199bf3fb816958151d55</string>
+    <string name="google_crash_reporting_api_key" translatable="false">AIzaSyCa3d0tsP34PRW2EHBm0iGFHjOFPOL2ZeA</string>
+    <string name="google_storage_bucket" translatable="false">defensesuit.firebasestorage.app</string>
+    <string name="project_id" translatable="false">defensesuit</string>
+</resources>
